@@ -107,12 +107,7 @@ void Sheet::ClearCell(Position pos) {
     if (auto pos_in_map_1 = sheet_.find(pos.row); pos_in_map_1 != sheet_.end()) {
         if (auto pos_in_map_2 = pos_in_map_1->second.find(pos.col); pos_in_map_2 != pos_in_map_1->second.end()) {
 
-
-
-            //std::cout << 555 << std::endl;
             pos_in_map_2->second->Clear();
-            //pos_in_map_2->second->Set("");
-            //std::cout << 555 << std::endl;
 
             if (pos_in_map_1->second.size() == 1) {
                 sheet_.erase(pos_in_map_1);

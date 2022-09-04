@@ -22,9 +22,6 @@ public:
     void PrintValues(std::ostream& output) const override;
     void PrintTexts(std::ostream& output) const override;
 
-	// Можете дополнить ваш класс нужными полями и методами
-
-
 private:
     void RecalculateArea();
 

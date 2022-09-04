@@ -264,8 +264,6 @@ public:
                     return 0;
                 }
 
-                //std::cout << ":" << str << ":" << std::endl;
-
                 int dbl;
 
                 const std::from_chars_result res = std::from_chars(str.data(), str.data() + str.size(), dbl);

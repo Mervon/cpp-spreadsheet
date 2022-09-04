@@ -18,7 +18,7 @@ namespace {
 
 class Formula : public FormulaInterface {
 public:
-// Реализуйте следующие методы:
+
     explicit Formula(std::string expression);
     FormulaInterface::Value Evaluate(const SheetInterface& sheet) const override;
     std::string GetExpression() const override;
@@ -57,8 +57,8 @@ FormulaInterface::Value Formula::Evaluate(const SheetInterface& sheet) const {
                 break;
             }
         }
-        
-        return -999.0;
+
+        return -999.0; // need for compiling without warning
     }
 }
 

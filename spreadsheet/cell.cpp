@@ -5,32 +5,21 @@
 #include <string>
 #include <optional>
 
-
-// Реализуйте следующие методы
 Cell::Cell(SheetInterface& sheet) : sheet_(sheet) {}
 
 Cell::~Cell() {}
 
 void Cell::Set(std::string text) {
-    //std::cout << ":b4:" << parents_.size() << ":b4:" << std::endl;
 
     CheckForCircular(text);
 
     raw_value_ = text;
 
-    //std::cout << 666 << std::endl;
-
     RecalculateParents();
-
-    //std::cout << 666 << std::endl;
 
     CalculateValue();
 
-    //std::cout << 666 << std::endl;
-
     RecalculateChilds();
-    //std::cout << ":after:" << parents_.size() << ":after:" << std::endl;
-    //std::cout << 666 << std::endl;
 }
 
 void Cell::CheckForCircular(std::string text) {
@@ -84,9 +73,7 @@ void Cell::CheckForCircularInternal(const std::vector<CellInterface*>& pointers)
 
 void Cell::DeleteFromChilds() {
     for (auto& child : childs_) {
-        //std::cout << ":b4:" << reinterpret_cast<Cell*>(child)->parents_.size() << ":b4:" << std::endl;
         reinterpret_cast<Cell*>(child)->parents_.erase(reinterpret_cast<CellInterface*>(this));
-        //std::cout << ":after:" << reinterpret_cast<Cell*>(child)->parents_.size() << ":after:" << std::endl;
     }
 
 }
@@ -102,13 +89,9 @@ void Cell::DeleteFromParents() {
 }
 
 void Cell::RecalculateParents() {
-    //std::cout << 333 << std::endl;
-    //std::cout << ":" << parents_.size()  << ":" << std::endl;
     for (auto& parent : parents_) {
         reinterpret_cast<Cell*>(parent)->childs_.erase(reinterpret_cast<CellInterface*>(this));
     }
-
-    //std::cout << 333 << std::endl;
 
     parents_.clear();
 

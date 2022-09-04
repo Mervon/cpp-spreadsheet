@@ -30,9 +30,6 @@ public:
 
     bool IsReferenced() const;
 
-    std::set<CellInterface*> parents_;
-    std::set<CellInterface*> childs_;
-
 private:
 
     void CheckForCircular(std::string text);
@@ -49,6 +46,8 @@ private:
 
     void DeleteFromChilds();
 
+    std::set<CellInterface*> parents_;
+    std::set<CellInterface*> childs_;
     SheetInterface& sheet_;
     std::unique_ptr<CellInterface::Value> value_;
     std::string raw_value_;
