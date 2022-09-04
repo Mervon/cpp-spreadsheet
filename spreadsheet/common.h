@@ -42,13 +42,27 @@ public:
         Div0,  // в результате вычисления возникло деление на ноль
     };
 
-    FormulaError(Category category);
+    FormulaError(Category category) : category_(category) {}
 
-    Category GetCategory() const;
+    Category GetCategory() const {
+        return category_;
+    }
 
-    bool operator==(FormulaError rhs) const;
+    bool operator==(FormulaError rhs) const {
+        return category_ == rhs.GetCategory();
+    }
 
-    std::string_view ToString() const;
+    std::string ToString() const {
+        if (category_ == Category::Value) {
+            return "#VALUE!";
+        } else if (category_ == Category::Div0) {
+            return "#DIV/0!";
+        } else if (category_ == Category::Ref) {
+            return "#REF!";
+        } else {
+            return "never get here";
+        }
+    }
 
 private:
     Category category_;

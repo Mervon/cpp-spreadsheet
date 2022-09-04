@@ -3,14 +3,14 @@
 #include "common.h"
 #include "formula.h"
 
-#include <functional>
-#include <unordered_set>
+#include <string>
+#include <set>
 
 class Sheet;
 
 class Cell : public CellInterface {
 public:
-    Cell(Sheet& sheet);
+    Cell(SheetInterface& sheet);
     ~Cell();
 
     void Set(std::string text);
@@ -20,17 +20,40 @@ public:
     std::string GetText() const override;
     std::vector<Position> GetReferencedCells() const override;
 
+    std::set<CellInterface*>& GetChilds() {
+        return childs_;
+    }
+
+    std::set<CellInterface*>& GetParents() {
+        return parents_;
+    }
+
     bool IsReferenced() const;
 
+    std::set<CellInterface*> parents_;
+    std::set<CellInterface*> childs_;
+
 private:
-    class Impl;
-    class EmptyImpl;
-    class TextImpl;
-    class FormulaImpl;
 
-    std::unique_ptr<Impl> impl_;
+    void CheckForCircular(std::string text);
 
-    // Добавьте поля и методы для связи с таблицей, проверки циклических 
-    // зависимостей, графа зависимостей и т. д.
+    void CheckForCircularInternal(const std::vector<CellInterface*>& pointers);
 
+    void RecalculateChilds();
+
+    void CalculateValue();
+
+    void RecalculateParents();
+
+    void DeleteFromParents();
+
+    void DeleteFromChilds();
+
+    SheetInterface& sheet_;
+    std::unique_ptr<CellInterface::Value> value_;
+    std::string raw_value_;
+
+    std::vector<Position> references_;
+    bool is_formula_ = false;
+    bool is_empty_cell = true;
 };

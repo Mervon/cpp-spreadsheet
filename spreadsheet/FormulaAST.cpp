@@ -4,11 +4,20 @@
 #include "FormulaLexer.h"
 #include "FormulaParser.h"
 
+#include <charconv>
 #include <cassert>
 #include <cmath>
 #include <memory>
 #include <optional>
 #include <sstream>
+#include <iostream>
+#include <variant>
+#include <algorithm>
+#include <iomanip>
+#include <cstdlib>
+#include <charconv>
+#include <system_error>
+
 
 namespace ASTImpl {
 
@@ -72,7 +81,7 @@ public:
     virtual ~Expr() = default;
     virtual void Print(std::ostream& out) const = 0;
     virtual void DoPrintFormula(std::ostream& out, ExprPrecedence precedence) const = 0;
-    virtual double Evaluate(/*добавьте сюда нужные аргументы*/ args) const = 0;
+    virtual double Evaluate(const SheetInterface& sheet) const = 0;
 
     // higher is tighter
     virtual ExprPrecedence GetPrecedence() const = 0;
@@ -142,8 +151,34 @@ public:
         }
     }
 
-    double Evaluate(/*добавьте нужные аргументы*/) const override {
-			// Скопируйте ваше решение из предыдущих уроков.
+    double Evaluate(const SheetInterface& sheet) const override {
+    	switch (type_) {
+            case Add:
+                if (std::isfinite(lhs_.get()->Evaluate(sheet) + rhs_.get()->Evaluate(sheet))) {
+                    return lhs_.get()->Evaluate(sheet) + rhs_.get()->Evaluate(sheet);
+                } else {
+                    throw FormulaError{FormulaError::Category::Div0};
+                }
+            case Subtract:
+                if (std::isfinite(lhs_.get()->Evaluate(sheet) - rhs_.get()->Evaluate(sheet))) {
+                    return lhs_.get()->Evaluate(sheet) - rhs_.get()->Evaluate(sheet);
+                } else {
+                    throw FormulaError{FormulaError::Category::Div0};
+                }
+            case Multiply:
+                if (std::isfinite(lhs_.get()->Evaluate(sheet) * rhs_.get()->Evaluate(sheet))) {
+                    return lhs_.get()->Evaluate(sheet) * rhs_.get()->Evaluate(sheet);
+                } else {
+                    throw FormulaError{FormulaError::Category::Div0};
+                }
+            case Divide:
+                if (std::isfinite(lhs_.get()->Evaluate(sheet) / rhs_.get()->Evaluate(sheet))) {
+                    return lhs_.get()->Evaluate(sheet) / rhs_.get()->Evaluate(sheet);
+                } else {
+                    throw FormulaError{FormulaError::Category::Div0};
+                }
+        }
+        return -1;
     }
 
 private:
@@ -180,8 +215,16 @@ public:
         return EP_UNARY;
     }
 
-    double Evaluate(/*добавьте нужные аргументы*/ args) const override {
-        // Скопируйте ваше решение из предыдущих уроков.
+    double Evaluate(const SheetInterface& sheet) const override {
+    	switch(type_) {
+    		case UnaryPlus : {
+    			return operand_.get()->Evaluate(sheet);
+    		}
+    		case UnaryMinus : {
+    			return -(operand_.get()->Evaluate(sheet));
+    		}
+    	}
+        return -1;
     }
 
 private:
@@ -211,8 +254,43 @@ public:
         return EP_ATOM;
     }
 
-    double Evaluate(/*добавьте нужные аргументы*/ args) const override {
-        // реализуйте метод.
+    double Evaluate(const SheetInterface& sheet) const override {
+        if (const CellInterface* cell = sheet.GetCell(*cell_); cell != nullptr) {
+            if (std::holds_alternative<double>(cell->GetValue())) {
+                return std::get<double>(cell->GetValue());
+            } else if (std::holds_alternative<std::string>(cell->GetValue())) {
+                std::string str = std::get<std::string>(cell->GetValue());
+                if (str.size() == 0) {
+                    return 0;
+                }
+
+                //std::cout << ":" << str << ":" << std::endl;
+
+                int dbl;
+
+                const std::from_chars_result res = std::from_chars(str.data(), str.data() + str.size(), dbl);
+
+                if (res.ptr == str.data() + str.size()) {
+                    double d = dbl;
+                    return d;
+                } else {
+                    if (*res.ptr == '.') {
+                        const std::from_chars_result res_2 = std::from_chars(res.ptr + 1, str.data() + str.size(), dbl);
+                        if (res_2.ptr == str.data() + str.size()) {
+                            return stod(str);
+                        } else {
+                            throw FormulaError(FormulaError::Category::Value);
+                        }
+                    } else {
+                        throw FormulaError(FormulaError::Category::Value);
+                    }
+                }
+            } else if (std::holds_alternative<FormulaError>(cell->GetValue())) {
+                throw FormulaError(std::get<FormulaError>(cell->GetValue()));
+            }
+        }
+
+        return 0;
     }
 
 private:
@@ -237,7 +315,7 @@ public:
         return EP_ATOM;
     }
 
-    double Evaluate(/*добавьте нужные аргументы*/ args) const override {
+    double Evaluate(const SheetInterface& /*sheet*/) const override {
         return value_;
     }
 
@@ -391,8 +469,8 @@ void FormulaAST::PrintFormula(std::ostream& out) const {
     root_expr_->PrintFormula(out, ASTImpl::EP_ATOM);
 }
 
-double FormulaAST::Execute(/*добавьте нужные аргументы*/ args) const {
-    return root_expr_->Evaluate(/*добавьте нужные аргументы*/ args);
+double FormulaAST::Execute(const SheetInterface& sheet) const {
+    return root_expr_->Evaluate(sheet);
 }
 
 FormulaAST::FormulaAST(std::unique_ptr<ASTImpl::Expr> root_expr, std::forward_list<Position> cells)
